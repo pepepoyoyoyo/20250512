@@ -1,82 +1,243 @@
+<!DOCTYPE html>
 <html lang="ja">
-
 <head>
-  <meta charset="utf-8">
-  <title>Mom's Bakery</title>
-  <link rel="stylesheet" href="style.css">
-  <link rel="preconnect" href="https://fonts.gstatic.com">
-  <link href="https://fonts.googleapis.com/css2?family=Pacifico&family=Satisfy&family=Stoke&family=Yellowtail&family=Geo&family=Oswald&family=Lobster&family=Cookie&family=Chewy&family=Limelight&family=Sacramento&family=Plaster&display=swap" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>神経衰弱</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 50px;
+    }
+
+    #game-board {
+      display: grid;
+      grid-template-columns: repeat(4, 100px);
+      gap: 10px;
+      justify-content: center;
+      margin-top: 20px;
+    }
+
+    .card {
+      width: 100px;
+      height: 100px;
+      background-color: lightgray;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    #timer {
+      font-size: 24px;
+      margin-top: 10px;
+      color: red;
+    }
+
+    #message {
+      font-size: 28px;
+      margin-top: 20px;
+      color: blue;
+    }
+
+    /* カカポのスタイル（出現アニメーション付き） */
+    #kakapo {
+      position: fixed;
+      bottom: 0;
+      left: -200px; /* 最初は画面外に */
+      width: 150px;
+      transition: left 1.5s ease-out;
+      z-index: 10;
+    }
+
+    #kakapo.show {
+      left: 20px; /* 左端から登場 */
+    }
+
+    /* ハイタッチ吹き出し */
+    #speech-bubble {
+      position: fixed;
+      left: 180px;
+      bottom: 120px;
+      background: #fff;
+      border: 2px solid #333;
+      border-radius: 10px;
+      padding: 10px 15px;
+      font-size: 18px;
+      display: none;
+      z-index: 11;
+    }
+
+    /* ハイタッチボタン */
+    #highfive-button {
+      position: fixed;
+      left: 180px;
+      bottom: 60px;
+      font-size: 18px;
+      padding: 10px 20px;
+      border: none;
+      background-color: #ffcc00;
+      border-radius: 8px;
+      cursor: pointer;
+      display: none;
+      z-index: 11;
+    }
+
+    /* カカポのハッピーアニメーション */
+    #kakapo.happy {
+      animation: bounce 0.6s ease;
+    }
+
+    @keyframes bounce {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-20px); }
+    }
+
+    /* 背景が虹色に光る */
+    .rainbow-bg {
+      animation: rainbow 3s linear infinite;
+    }
+
+    @keyframes rainbow {
+      0% { background-color: #ff0000; }
+      16% { background-color: #ffa500; }
+      33% { background-color: #ffff00; }
+      50% { background-color: #008000; }
+      66% { background-color: #0000ff; }
+      83% { background-color: #4b0082; }
+      100% { background-color: #ee82ee; }
+    }
+
+    /* カカポが踊るアニメーション */
+    @keyframes kakapo-dance {
+      0% { transform: translateY(0) rotate(0deg); }
+      25% { transform: translateY(-10px) rotate(-5deg); }
+      50% { transform: translateY(0) rotate(0deg); }
+      75% { transform: translateY(-10px) rotate(5deg); }
+      100% { transform: translateY(0) rotate(0deg); }
+    }
+
+    #kakapo.dance {
+      animation: kakapo-dance 0.6s infinite ease-in-out;
+    }
+  </style>
 </head>
-
 <body>
+  <h1>神経衰弱</h1>
+  <div id="timer">残り時間: 30秒</div>
+  <div id="game-board"></div>
+  <div id="message"></div>
 
-<!-- ヘッダー -->
-<header>
-  <h1>Mom's Bakery</h1>
-</header>
+  <!-- カカポ画像 -->
+  <img id="kakapo" src="https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Sirocco_the_Kakapo.jpg/200px-Sirocco_the_Kakapo.jpg" alt="カカポ" />
 
+  <!-- ハイタッチ吹き出し -->
+  <div id="speech-bubble">ハイタッチして！🖐</div>
 
-<!-- お店紹介 -->
-<section>
-  <h2>Mom's Bakeryについて</h2>
+  <!-- ハイタッチボタン -->
+  <button id="highfive-button">ハイタッチ！</button>
 
-  <!-- レイアウトの箱-->
-  <div class="layout">
+  <script>
+    const symbols = ["🍎", "🍌", "🍒", "🍇", "🍊", "🍎", "🍌", "🍒", "🍇", "🍊"];
+    symbols.sort(() => Math.random() - 0.5);
 
-    <!-- １つ目の箱   -->
-    <div>
-      <img src="cro.jpg" alt="クロワッサン">
-    </div>
+    const board = document.getElementById("game-board");
+    const timerDisplay = document.getElementById("timer");
+    const message = document.getElementById("message");
+    const kakapo = document.getElementById("kakapo");
+    const speechBubble = document.getElementById("speech-bubble");
+    const highFiveButton = document.getElementById("highfive-button");
 
-    <!-- ２つ目の箱   -->
-    <div>
-      <p class="shop-text">
-        1725年にフランスから来たサラ・オートゥイユが、ホープタウン時計台の前で小さな屋台を使ってクロワッサンを売り始めたのがMom's Bakeryの始まりです。<br>
-        現在の店長マーサで12代目となりますが、一番人気の石釜で焼いたサクサククロワッサンは創業当時の味を約３００年守り続けています。
-      </p>
-    </div>
+    let selected = [];
+    let matched = [];
+    let timeLeft = 30;
+    let gameOver = false;
 
-  </div>
+    const countdown = setInterval(() => {
+      timeLeft--;
+      timerDisplay.textContent = `残り時間: ${timeLeft}秒`;
+      if (timeLeft <= 0) {
+        clearInterval(countdown);
+        gameOver = true;
+        message.textContent = "時間切れ！ゲーム終了！";
 
-</section>
+        // 画面揺れ演出（任意）
+        document.body.classList.add("shake");
+        setTimeout(() => {
+          document.body.classList.remove("shake");
+        }, 500);
+      }
+    }, 1000);
 
+    symbols.forEach((symbol, index) => {
+      const card = document.createElement("div");
+      card.classList.add("card");
+      card.dataset.index = index;
 
-<!-- メニュー -->
-<section class="menu">
-  <h2 class="menu-title">メニュー</h2>
+      card.addEventListener("click", () => {
+        if (gameOver || matched.includes(index) || selected.length >= 2 || card.textContent !== "") return;
 
-  <!-- メニュー表 -->
-  <table>
-    <tr>
-      <th>商品名</th>
-      <th>価格</th>
-    </tr>
-    <tr>
-      <td>サクサククロワッサン</td>
-      <td>280円</td>
-    </tr>
-    <tr>
-      <td>レーズンデニッシュ</td>
-      <td>200円</td>
-    </tr>
-    <tr>
-      <td>クラシックバゲット</td>
-      <td>380円</td>
-    </tr>
-  </table>
+        card.textContent = symbol;
+        selected.push({ index, symbol });
 
-  <!-- リンク -->
-  <a href="season.html">季節限定のメニューはこちら</a>
+        if (selected.length === 2) {
+          if (selected[0].symbol === selected[1].symbol) {
+            matched.push(selected[0].index, selected[1].index);
+            selected = [];
 
-</section>
+            // 全てのカードが一致した場合
+            if (matched.length === symbols.length) {
+              clearInterval(countdown);
+              message.textContent = "おめでとう！全部見つけました！";
+              gameOver = true;
 
+              // ✅ カカポ登場
+              kakapo.classList.add("show");
 
-<!-- フッタ ー-->
-<footer>
-  &copy; Mom's Bakery
-</footer>
+              // ✅ 吹き出しとボタン表示
+              setTimeout(() => {
+                speechBubble.style.display = "block";
+                highFiveButton.style.display = "block";
+              }, 1600); // カカポ登場後に
 
+              // ✅ ハイタッチボタン動作
+              highFiveButton.addEventListener("click", () => {
+                kakapo.classList.add("happy");
+                speechBubble.textContent = "やったね！🦜✨";
+                highFiveButton.style.display = "none";
 
+                // ✅ 背景を虹色に光らせる
+                document.body.classList.add("rainbow-bg");
+
+                // 必要なら一定時間後に止めることも可能（例：5秒）
+                // setTimeout(() => {
+                //     document.body.classList.remove("rainbow-bg");
+                // }, 5000);
+
+                // カカポが踊り始める
+                kakapo.classList.add("dance");
+
+                // バウンド演出終わったら元に戻す
+                setTimeout(() => {
+                  kakapo.classList.remove("happy");
+                }, 600);
+              });
+            }
+          } else {
+            setTimeout(() => {
+              document.querySelectorAll(".card").forEach(c => {
+                if (!matched.includes(Number(c.dataset.index))) c.textContent = "";
+              });
+              selected = [];
+            }, 1000);
+          }
+        }
+      });
+
+      board.appendChild(card);
+    });
+  </script>
 </body>
-
 </html>
